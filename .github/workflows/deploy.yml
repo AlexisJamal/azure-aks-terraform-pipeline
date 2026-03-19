@@ -19,8 +19,7 @@ jobs:
     - name: Build and Push to ACR
       run: |
         az acr login --name ${{ secrets.ACR_NAME }}
-        # GitHub Actions tourne sur du x86_64, donc le build sera nativement compatible AMD64 !
-        docker build -t ${{ secrets.ACR_NAME }}.azurecr.io/my-api:${{ github.sha }} .
+        docker build -t ${{ secrets.ACR_NAME }}.azurecr.io/my-api:${{ github.sha }} ./app
         docker push ${{ secrets.ACR_NAME }}.azurecr.io/my-api:${{ github.sha }}
 
     - name: Set AKS Context
@@ -31,7 +30,6 @@ jobs:
 
     - name: Deploy to AKS
       run: |
-        # On utilise sed pour mettre à jour l'image avec le tag du commit actuel dans le YAML
         sed -i "s|image:.*|image: ${{ secrets.ACR_NAME }}.azurecr.io/my-api:${{ github.sha }}|g" k8s/deployment.yaml
         kubectl apply -f k8s/deployment.yaml
         kubectl apply -f k8s/service.yaml
